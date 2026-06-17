@@ -18,22 +18,14 @@ A fun, interactive Flappy Bird-style game featuring Goku from Dragon Ball Z, bui
 
 ### Local Development
 ```bash
-# Install dependencies (Node.js required)
 npm install
-
-# Start the server
 npm start
 ```
 
-Server runs at `http://localhost:8000`
-
-### Using HTTP Server (Python)
-```bash
-python -m http.server 8000
-```
+Then open `http://localhost:8000` in your browser.
 
 ### Direct Browser
-Simply open `goku.html` in a web browser
+Open `goku.html` directly in a web browser.
 
 ## 🎯 How to Play
 
@@ -53,29 +45,25 @@ Simply open `goku.html` in a web browser
 ## 📁 File Structure
 
 ```
-flappy-goku/
+website/
 ├── goku.html       # Main game file (HTML + CSS + JS)
 ├── server.js       # Local server for development
 ├── package.json    # Node.js configuration
-└── README.md       # This file
+├── README.md       # This file
+└── .github/        # GitHub Actions workflow for Pages deployment
 ```
 
-## 🌐 Deployment Options
+## 🌐 Deployment
 
-### GitHub Pages (Recommended)
-1. Push to GitHub repository
-2. Go to Settings → Pages
-3. Select main branch as source
-4. Game will be live at `https://yourusername.github.io/flappy-goku`
+This repository includes a GitHub Pages workflow at `.github/workflows/pages.yml`.
 
-### Vercel / Netlify
-1. Connect your GitHub repository
-2. Deploy automatically
-3. Live URL provided
+### Live site URL
+The site should be available at:
 
-### Traditional Hosting
-- Upload `goku.html` to any web hosting service
-- Access via your domain
+`https://suvamsingh912-web.github.io/website`
+
+### Manual publish
+If needed, go to GitHub repo Settings → Pages and verify the site is published from the `main` branch.
 
 ## 💾 Browser Support
 
@@ -90,14 +78,6 @@ flappy-goku/
 - **Web Audio API** - Sound generation
 - **localStorage** - Data persistence
 - **Vanilla JavaScript** - No frameworks
-
-## 📊 Game Mechanics
-
-- **Score System** - Points for passing pipes
-- **Combo Multiplier** - Chains of successful passes
-- **Difficulty Scaling** - Game gets harder over time
-- **Collision Detection** - Precise hit detection
-- **Particle System** - Visual effects for actions
 
 ## ✨ Credits
 
