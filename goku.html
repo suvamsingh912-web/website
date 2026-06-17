@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Goku - Dragon Ball Z Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&display=swap');
+ 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+ 
+        body {
+            background: #0a0a2e;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+ 
+        #stars-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+        }
+ 
+        #game-wrapper {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+ 
+        #title {
+            font-family: 'Bangers', cursive;
+            font-size: 52px;
+            color: #ff6a00;
+            text-shadow:
+                0 0 10px #ff6a00,
+                0 0 30px #ff3300,
+                0 0 60px #ff0000,
+                3px 3px 0 #222;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            animation: titlePulse 2s ease-in-out infinite, float 3s ease-in-out infinite;
+        }
+ 
+        #subtitle {
+            font-family: 'Bangers', cursive;
+            font-size: 22px;
+            color: #00ccff;
+            text-shadow: 0 0 15px #00ccff, 0 0 30px #0066ff;
+            margin-bottom: 15px;
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+ 
+        @keyframes titlePulse {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.4); }
+        }
+ 
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+ 
+        #game-container {
+            position: relative;
+            width: 480px;
+            height: 640px;
+            border: 3px solid #ff6a00;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow:
+                0 0 20px rgba(255, 106, 0, 0.5),
+                0 0 60px rgba(255, 0, 0, 0.2),
+                inset 0 0 30px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+        }
+ 
+        canvas { display: block; width: 100%; height: 100%; }
+ 
+        #landing-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(ellipse at center, rgba(0,100,200,0.3) 0%, transparent 70%);
+            z-index: 20;
+            transition: opacity 0.5s ease;
+        }
+ 
+        #landing-screen.hidden { opacity: 0; pointer-events: none; }
+ 
+        #landing-goku {
+            width: 120px; height: 120px;
+            animation: gokuBounce 1.5s ease-in-out infinite, gokuGlow 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px #ffaa00);
+        }
+ 
+        @keyframes gokuBounce {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-30px) rotate(5deg); }
+        }
+ 
+        @keyframes gokuGlow {
+            0%, 100% { filter: drop-shadow(0 0 15px #ffaa00); }
+            50% { filter: drop-shadow(0 0 35px #ffdd00) drop-shadow(0 0 60px #ff6600); }
+        }
+ 
+        #start-btn {
+            margin-top: 30px;
+            padding: 14px 40px;
+            font-family: 'Bangers', cursive;
+            font-size: 28px;
+            color: #fff;
+            background: linear-gradient(135deg, #ff6a00, #ff3300);
+            border: 2px solid #ffaa00;
+            border-radius: 50px;
+            cursor: pointer;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            box-shadow: 0 0 20px rgba(255, 106, 0, 0.6), 0 5px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            animation: btnPulse 2s ease-in-out infinite;
+        }
+ 
+        #start-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(255, 106, 0, 0.9), 0 5px 25px rgba(0,0,0,0.4);
+        }
+ 
+        @keyframes btnPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 106, 0, 0.6); }
+            50% { box-shadow: 0 0 40px rgba(255, 106, 0, 0.9), 0 0 80px rgba(255, 106, 0, 0.3); }
+        }
+ 
+        #instructions {
+            margin-top: 20px;
+            font-size: 10px;
+            color: #88ccff;
+            text-align: center;
+            line-height: 2;
+            animation: fadeInUp 1s ease 0.5s both;
+        }
+ 
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+ 
+        #game-over-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 30;
+        }
+ 
+        #game-over-screen.visible { display: flex; }
+ 
+        #game-over-text {
+            font-family: 'Bangers', cursive;
+            font-size: 48px;
+            color: #ff3333;
+            text-shadow: 0 0 20px #ff0000, 3px 3px 0 #000;
+            animation: shake 0.5s ease;
+        }
+ 
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+ 
+        #final-score {
+            font-size: 18px;
+            color: #ffcc00;
+            margin: 20px 0;
+            text-shadow: 0 0 10px #ffcc00;
+        }
+ 
+        #high-score { font-size: 11px; color: #aaa; margin-bottom: 25px; }
+ 
+        #retry-btn {
+            padding: 12px 35px;
+            font-family: 'Bangers', cursive;
+            font-size: 24px;
+            color: #fff;
+            background: linear-gradient(135deg, #00cc66, #009944);
+            border: 2px solid #00ff88;
+            border-radius: 50px;
+            cursor: pointer;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            box-shadow: 0 0 20px rgba(0, 204, 102, 0.5);
+            transition: all 0.3s ease;
+        }
+ 
+        #retry-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.8);
+        }
+ 
+        #score-display {
+            position: absolute;
+            top: 15px; left: 50%; transform: translateX(-50%);
+            font-family: 'Bangers', cursive;
+            font-size: 42px;
+            color: #fff;
+            text-shadow: 2px 2px 0 #000, 0 0 20px rgba(255, 255, 255, 0.3);
+            z-index: 15;
+            pointer-events: none;
+        }
+ 
+        #power-indicator {
+            position: absolute;
+            bottom: 10px; left: 10px;
+            font-size: 9px;
+            color: #ffdd00;
+            text-shadow: 0 0 8px #ffaa00;
+            z-index: 15;
+            pointer-events: none;
+        }
+ 
+        #power-bar {
+            width: 80px; height: 8px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #ffaa00;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+ 
+        #power-fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, #ffaa00, #ff4400);
+            border-radius: 4px;
+            transition: width 0.1s;
+        }
+        // css
+/* ===== MUSIC TOGGLE ===== */
+#music-toggle {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
+  width: 52px; height: 52px; border-radius: 50%;
+  border: 2px solid #ffaa00;
+  background: linear-gradient(135deg, rgba(255,106,0,0.2), rgba(255,51,0,0.2));
+  backdrop-filter: blur(12px); cursor: pointer; font-size: 1.4rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(255,106,0,0.4); color: #ffcc00; user-select: none;
+}
+#music-toggle:hover { transform: scale(1.15); box-shadow: 0 0 30px rgba(255,106,0,0.7); border-color: #ffdd00; }
+#music-toggle.playing { animation: dbzMusicPulse 1.5s ease-in-out infinite; }
+#music-toggle.muted .icon-on { display: none; }
+#music-toggle.muted .icon-off { display: inline; }
+#music-toggle .icon-off { display: none; }
+#music-toggle .icon-on { display: inline; }
+@keyframes dbzMusicPulse {
+  0%,100% { box-shadow: 0 0 10px rgba(255,170,0,0.4), 0 0 25px rgba(255,68,0,0.2); }
+  50% { box-shadow: 0 0 25px rgba(255,170,0,0.8), 0 0 50px rgba(255,68,0,0.4); }
+}
+#music-volume-wrap {
+  position: fixed; bottom: 5.8rem; right: 1.8rem; z-index: 998;
+  opacity: 0; transform: translateY(10px) scale(0.9); pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  background: rgba(10,10,46,0.85); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,170,0,0.3); border-radius: 12px;
+  padding: 10px 8px; display: flex; flex-direction: column; align-items: center;
+}
+#music-volume-wrap.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+#music-volume-slider {
+  -webkit-appearance: none; appearance: none; width: 6px; height: 80px;
+  background: rgba(255,255,255,0.15); border-radius: 10px; outline: none;
+  cursor: pointer; display: block; margin: 0 auto;
+}
+#music-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+  background: linear-gradient(135deg,#ffaa00,#ff4400); cursor: pointer;
+  box-shadow: 0 0 10px rgba(255,170,0,0.5); transition: transform 0.2s;
+}
+#music-volume-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+#music-volume-slider::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: linear-gradient(135deg,#ffaa00,#ff4400); border: none;
+  cursor: pointer; box-shadow: 0 0 10px rgba(255,170,0,0.5);
+}
+.vol-label { font-family: 'Bangers',cursive; font-size: 10px; color: #ffaa00; margin-top: 5px; letter-spacing: 2px; }
+#sfx-toggle {
+  position: fixed; bottom: 1.5rem; left: 1.5rem; z-index: 999;
+  width: 52px; height: 52px; border-radius: 50%;
+  border: 2px solid #00ccff;
+  background: linear-gradient(135deg,rgba(0,204,255,0.2),rgba(0,102,255,0.2));
+  backdrop-filter: blur(12px); cursor: pointer; font-size: 1.4rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s ease; box-shadow: 0 0 15px rgba(0,204,255,0.4);
+  color: #00ccff; user-select: none;
+}
+#sfx-toggle:hover { transform: scale(1.15); box-shadow: 0 0 30px rgba(0,204,255,0.7); border-color: #00ffff; }
+#sfx-toggle.muted .sfx-on { display: none; }
+#sfx-toggle.muted .sfx-off { display: inline; }
+#sfx-toggle .sfx-off { display: none; }
+#sfx-toggle .sfx-on { display: inline; }
+#combo-display {
+  position: absolute; top: 65px; left: 50%; transform: translateX(-50%);
+  font-family: 'Bangers',cursive; font-size: 20px; color: #ffdd00;
+  text-shadow: 0 0 15px #ffaa00, 2px 2px 0 #000; z-index: 15;
+  pointer-events: none; opacity: 0; transition: opacity 0.3s ease;
+}
+#combo-display.visible { opacity: 1; }
+.score-popup {
+  position: absolute; font-family: 'Bangers',cursive; font-size: 28px;
+  color: #ffdd00; text-shadow: 0 0 10px #ffaa00, 2px 2px 0 #000;
+  pointer-events: none; z-index: 16;
+  animation: scoreFloat 1s ease-out forwards;
+}
+@keyframes scoreFloat {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-60px) scale(1.5); }
+}
+</style>
+</head>
+// html
+  <!-- ===== MUSIC & SFX ===== -->
+  <audio id="bgMusic" loop preload="metadata"><source src="" type="audio/mpeg" /></audio>
+ 
+  <button id="music-toggle" aria-label="Toggle music">
+    <span class="icon-on">🎵</span><span class="icon-off">🔇</span>
+  </button>
+  <div id="music-volume-wrap">
+    <input type="range" id="music-volume-slider" min="0" max="1" step="0.05" value="0.4" />
+    <span class="vol-label">VOL</span>
+  </div>
+ 
+  <button id="sfx-toggle" aria-label="Toggle sound effects">
+    <span class="sfx-on">🔊</span><span class="sfx-off">🔈</span>
+  </button>
+<body>
+    <canvas id="stars-bg"></canvas>
+ 
+    <div id="game-wrapper">
+        <div id="title">⚡ FLAPPY GOKU ⚡</div>
+        <div id="subtitle">~ DRAGON BALL Z EDITION ~</div>
+ 
+        <div id="game-container">
+            <canvas id="gameCanvas" width="480" height="640"></canvas>
+            <div id="score-display">0</div>
+            <div id="power-indicator">KI POWER<div id="power-bar"><div id="power-fill"></div></div></div>
+ 
+            <!-- Landing Screen with animated SVG Goku -->
+            <div id="landing-screen">
+                <svg id="landing-goku" viewBox="0 0 120 120">
+                    <!-- Pulsing Ki Aura -->
+                    <ellipse cx="60" cy="60" rx="55" ry="55" fill="none" stroke="#ffdd00" stroke-width="2" opacity="0.3">
+                        <animate attributeName="rx" values="50;58;50" dur="1.5s" repeatCount="indefinite"/>
+                        <animate attributeName="ry" values="50;58;50" dur="1.5s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="0.2;0.5;0.2" dur="1.5s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <ellipse cx="60" cy="60" rx="42" ry="42" fill="none" stroke="#ff8800" stroke-width="1.5" opacity="0.2">
+                        <animate attributeName="rx" values="38;46;38" dur="1.2s" repeatCount="indefinite"/>
+                        <animate attributeName="ry" values="38;46;38" dur="1.2s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <!-- Body (orange gi) -->
+                    <ellipse cx="60" cy="72" rx="16" ry="18" fill="#ff6600"/>
+                    <!-- Blue belt -->
+                    <rect x="46" y="68" width="28" height="5" rx="2" fill="#0044cc"/>
+                    <!-- Arms -->
+                    <ellipse cx="38" cy="66" rx="8" ry="6" fill="#ffaa88" transform="rotate(-20 38 66)"/>
+                    <ellipse cx="82" cy="66" rx="8" ry="6" fill="#ffaa88" transform="rotate(20 82 66)"/>
+                    <!-- Head -->
+                    <circle cx="60" cy="42" r="18" fill="#ffaa88"/>
+                    <!-- Super Saiyan spiky hair -->
+                    <polygon points="60,12 52,28 46,18 44,30 36,24 40,34 38,38 48,38" fill="#ffcc00"/>
+                    <polygon points="60,12 68,28 74,18 76,30 84,24 80,34 82,38 72,38" fill="#ffcc00"/>
+                    <polygon points="60,10 56,22 60,16 64,22" fill="#ffdd44"/>
+                    <polygon points="46,30 42,36 48,34" fill="#ffcc00"/>
+                    <polygon points="74,30 78,36 72,34" fill="#ffcc00"/>
+                    <!-- Eyes -->
+                    <ellipse cx="53" cy="42" rx="3.5" ry="4" fill="#fff"/>
+                    <ellipse cx="67" cy="42" rx="3.5" ry="4" fill="#fff"/>
+                    <circle cx="54" cy="42" r="2" fill="#003388"/>
+                    <circle cx="68" cy="42" r="2" fill="#003388"/>
+                    <circle cx="54.5" cy="41.5" r="0.8" fill="#fff"/>
+                    <circle cx="68.5" cy="41.5" r="0.8" fill="#fff"/>
+                    <!-- Eyebrows -->
+                    <line x1="49" y1="36" x2="56" y2="37" stroke="#553300" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="71" y1="36" x2="64" y2="37" stroke="#553300" stroke-width="2" stroke-linecap="round"/>
+                    <!-- Mouth -->
+                    <path d="M55,50 Q60,54 65,50" stroke="#993333" stroke-width="1.5" fill="none"/>
+                    <!-- Red headband -->
+                    <rect x="41" y="35" width="38" height="4" rx="2" fill="#ff0000" opacity="0.8"/>
+                    <!-- Legs -->
+                    <rect x="50" y="88" width="8" height="12" rx="3" fill="#0044cc"/>
+                    <rect x="62" y="88" width="8" height="12" rx="3" fill="#0044cc"/>
+                    <!-- Boots -->
+                    <ellipse cx="54" cy="102" rx="6" ry="4" fill="#fff"/>
+                    <ellipse cx="66" cy="102" rx="6" ry="4" fill="#fff"/>
+                    <!-- Animated Ki energy at hands -->
+                    <circle cx="34" cy="64" r="5" fill="#ffdd00" opacity="0.6">
+                        <animate attributeName="r" values="3;7;3" dur="0.8s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="0.4;0.8;0.4" dur="0.8s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="86" cy="64" r="5" fill="#ffdd00" opacity="0.6">
+                        <animate attributeName="r" values="3;7;3" dur="0.8s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="0.4;0.8;0.4" dur="0.8s" repeatCount="indefinite"/>
+                    </circle>
+                </svg>
+                <button id="start-btn">KAMEHAMEHA! 🐉</button>
+                <div id="instructions">TAP / SPACE to fly<br>Collect power orbs for Ki blasts<br>Avoid the pipes! 💥</div>
+            </div>
+ 
+            <div id="game-over-screen">
+                <div id="game-over-text">GAME OVER!</div>
+                <div id="final-score">Score: 0</div>
+                <div id="high-score">Best: 0</div>
+                <button id="retry-btn">TRY AGAIN ⚡</button>
+            </div>
+        </div>
+    </div>
+ 
+    <script>
+    // ============ BACKGROUND STARS ============
+    const starsBg = document.getElementById('stars-bg');
+    const starsCtx = starsBg.getContext('2d');
+    starsBg.width = window.innerWidth;
+    starsBg.height = window.innerHeight;
+    const bgStars = [];
+    for (let i = 0; i < 150; i++) {
+        bgStars.push({
+            x: Math.random() * starsBg.width,
+            y: Math.random() * starsBg.height,
+            r: Math.random() * 2 + 0.5,
+            speed: Math.random() * 0.5 + 0.1,
+            twinkle: Math.random() * Math.PI * 2
+        });
+    }
+    function drawBgStars() {
+        starsCtx.clearRect(0, 0, starsBg.width, starsBg.height);
+        const time = Date.now() * 0.001;
+        bgStars.forEach(s => {
+            const alpha = 0.3 + 0.7 * Math.abs(Math.sin(time * s.speed + s.twinkle));
+            starsCtx.beginPath();
+            starsCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            starsCtx.fillStyle = `rgba(200, 220, 255, ${alpha})`;
+            starsCtx.fill();
+        });
+        requestAnimationFrame(drawBgStars);
+    }
+    drawBgStars();
+    window.addEventListener('resize', () => {
+        starsBg.width = window.innerWidth;
+        starsBg.height = window.innerHeight;
+    });
+ 
+    // ============ GAME ENGINE ============
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = 480, H = 640;
+ 
+    let gameState = 'landing';
+    let score = 0;
+    let highScore = parseInt(localStorage.getItem('flappyGokuHigh') || '0');
+    let frame = 0;
+ 
+    const goku = {
+        x: 100, y: 300, vy: 0,
+        width: 40, height: 36,
+        rotation: 0, wingFrame: 0,
+        kiPower: 0, maxKi: 100,
+        isPowered: false, trail: [], frame: 0
+    };
+ 
+    const GRAVITY = 0.35;
+    const FLAP_FORCE = -6.5;
+    const PIPE_SPEED = 2.5;
+    const PIPE_GAP = 160;
+    const PIPE_WIDTH = 70;
+ 
+    let pipes = [], orbs = [], particles = [], blasts = [];
+    let bgScroll = 0, clouds = [], shakeAmount = 0;
+ 
+    for (let i = 0; i < 6; i++) {
+        clouds.push({
+            x: Math.random() * W,
+            y: Math.random() * H * 0.6,
+            w: 60 + Math.random() * 80,
+            speed: 0.3 + Math.random() * 0.3
+        });
+    }
+ 
+    // ============ DRAWING ============
+    function drawSky() {
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, '#1a0533');
+        grad.addColorStop(0.3, '#2d1b69');
+        grad.addColorStop(0.6, '#ff6b35');
+        grad.addColorStop(0.85, '#ff9a56');
+        grad.addColorStop(1, '#ffcc70');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+    }
+ 
+    function drawMountains() {
+        ctx.fillStyle = '#2d1b4e';
+        ctx.beginPath();
+        ctx.moveTo(0, H);
+        for (let x = 0; x <= W; x += 2) {
+            const y = H - 80 - Math.sin((x + bgScroll * 0.3) * 0.008) * 50
+                     - Math.sin((x + bgScroll * 0.3) * 0.015) * 25;
+            ctx.lineTo(x, y);
+        }
+        ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+ 
+        ctx.fillStyle = '#1a0f30';
+        ctx.beginPath();
+        ctx.moveTo(0, H);
+        for (let x = 0; x <= W; x += 2) {
+            const y = H - 40 - Math.sin((x + bgScroll * 0.5) * 0.01) * 30
+                     - Math.sin((x + bgScroll * 0.5) * 0.02) * 15;
+            ctx.lineTo(x, y);
+        }
+        ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+    }
+ 
+    function drawClouds() {
+        clouds.forEach(c => {
+            c.x -= c.speed;
+            if (c.x + c.w < 0) { c.x = W + 50; c.y = Math.random() * H * 0.5; }
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.beginPath(); ctx.ellipse(c.x, c.y, c.w * 0.5, 15, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(c.x - c.w * 0.2, c.y - 5, c.w * 0.3, 12, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(c.x + c.w * 0.2, c.y - 3, c.w * 0.35, 10, 0, 0, Math.PI * 2); ctx.fill();
+        });
+    }
+ 
+    function drawGround() {
+        const groundY = H - 20;
+        ctx.fillStyle = '#3d2b1f';
+        ctx.fillRect(0, groundY, W, 20);
+        ctx.fillStyle = '#5a3d2b';
+        ctx.fillRect(0, groundY, W, 4);
+        for (let x = -((bgScroll * 2) % 20); x < W; x += 20) {
+            ctx.fillStyle = '#2d6b1e';
+            ctx.beginPath(); ctx.moveTo(x, groundY); ctx.lineTo(x + 5, groundY - 8); ctx.lineTo(x + 10, groundY); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(x + 10, groundY); ctx.lineTo(x + 14, groundY - 6); ctx.lineTo(x + 18, groundY); ctx.fill();
+        }
+    }
+ 
+    function drawMiniDragonBall(x, y) {
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, Math.PI * 2);
+        const dbGrad = ctx.createRadialGradient(x - 2, y - 2, 1, x, y, 8);
+        dbGrad.addColorStop(0, '#ffee88');
+        dbGrad.addColorStop(0.5, '#ffaa00');
+        dbGrad.addColorStop(1, '#cc6600');
+        ctx.fillStyle = dbGrad;
+        ctx.fill();
+        ctx.fillStyle = '#ff2200';
+        ctx.font = 'bold 8px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('★', x, y + 1);
+        ctx.beginPath();
+        ctx.arc(x - 3, y - 3, 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fill();
+    }
+ 
+    function drawPipe(pipe) {
+        const topH = pipe.gapY - PIPE_GAP / 2;
+        const botY = pipe.gapY + PIPE_GAP / 2;
+        const pipeGrad = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
+        pipeGrad.addColorStop(0, '#cc4400');
+        pipeGrad.addColorStop(0.3, '#ff6600');
+        pipeGrad.addColorStop(0.7, '#ff8833');
+        pipeGrad.addColorStop(1, '#cc4400');
+ 
+        // Top pipe
+        ctx.fillStyle = pipeGrad;
+        ctx.fillRect(pipe.x, 0, PIPE_WIDTH, topH);
+        ctx.fillStyle = '#ff8833';
+        ctx.fillRect(pipe.x - 5, topH - 25, PIPE_WIDTH + 10, 25);
+        ctx.strokeStyle = '#0044cc'; ctx.lineWidth = 3;
+        ctx.strokeRect(pipe.x - 5, topH - 25, PIPE_WIDTH + 10, 25);
+        if (topH > 60) drawMiniDragonBall(pipe.x + PIPE_WIDTH / 2, topH - 55);
+ 
+        // Bottom pipe
+        ctx.fillStyle = pipeGrad;
+        ctx.fillRect(pipe.x, botY, PIPE_WIDTH, H - botY);
+        ctx.fillStyle = '#ff8833';
+        ctx.fillRect(pipe.x - 5, botY, PIPE_WIDTH + 10, 25);
+        ctx.strokeStyle = '#0044cc'; ctx.lineWidth = 3;
+        ctx.strokeRect(pipe.x - 5, botY, PIPE_WIDTH + 10, 25);
+        if (H - botY > 60) drawMiniDragonBall(pipe.x + PIPE_WIDTH / 2, botY + 35);
+ 
+        // Glow
+        ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 8;
+        ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 1;
+        ctx.strokeRect(pipe.x, 0, PIPE_WIDTH, topH);
+        ctx.strokeRect(pipe.x, botY, PIPE_WIDTH, H - botY);
+        ctx.shadowBlur = 0;
+    }
+ 
+    function drawGoku() {
+        ctx.save();
+        ctx.translate(goku.x, goku.y);
+        ctx.rotate(goku.rotation);
+        const scale = goku.isPowered ? 1.15 : 1;
+        ctx.scale(scale, scale);
+ 
+        // Powered aura rings
+        if (goku.isPowered) {
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(0, 0, 28 + i * 8, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(255, 220, 0, ${0.3 - i * 0.08})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+ 
+        // Aura glow
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 26, 24, 0, 0, Math.PI * 2);
+        ctx.fillStyle = goku.isPowered ? 'rgba(255, 200, 0, 0.2)' : 'rgba(255, 170, 0, 0.1)';
+        ctx.fill();
+ 
+        // Body (orange gi)
+        ctx.fillStyle = '#ff6600';
+        ctx.beginPath(); ctx.ellipse(0, 6, 14, 16, 0, 0, Math.PI * 2); ctx.fill();
+ 
+        // Belt
+        ctx.fillStyle = '#0044cc'; ctx.fillRect(-12, 2, 24, 4);
+        ctx.fillStyle = '#ffcc00'; ctx.fillRect(-3, 1, 6, 6);
+ 
+        // Left arm with Ki ball
+        ctx.fillStyle = '#ffaa88';
+        ctx.save();
+        ctx.translate(-14, -2);
+        ctx.rotate(-0.4 + Math.sin(goku.wingFrame * 0.15) * 0.3);
+        ctx.beginPath(); ctx.ellipse(0, 0, 8, 5, 0, 0, Math.PI * 2); ctx.fill();
+        if (goku.kiPower > 0) {
+            const kiSize = 4 + Math.sin(frame * 0.2) * 2;
+            ctx.beginPath(); ctx.arc(-6, 0, kiSize, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(0, 180, 255, ${0.6 + Math.sin(frame * 0.3) * 0.3})`; ctx.fill();
+            ctx.beginPath(); ctx.arc(-6, 0, kiSize * 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff'; ctx.fill();
+        }
+        ctx.restore();
+ 
+        // Right arm
+        ctx.fillStyle = '#ffaa88';
+        ctx.save();
+        ctx.translate(14, -2);
+        ctx.rotate(0.4 - Math.sin(goku.wingFrame * 0.15) * 0.3);
+        ctx.beginPath(); ctx.ellipse(0, 0, 8, 5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+ 
+        // Head
+        ctx.fillStyle = '#ffaa88';
+        ctx.beginPath(); ctx.arc(0, -14, 14, 0, Math.PI * 2); ctx.fill();
+ 
+        // Super Saiyan hair spikes
+        ctx.fillStyle = '#ffcc00';
+        [[0,-32,-6,-18,6,-18],[-8,-30,-14,-20,-4,-18],[-14,-26,-20,-18,-10,-16],
+         [8,-30,14,-20,4,-18],[14,-26,20,-18,10,-16],[-16,-22,-22,-14,-12,-14],
+         [16,-22,22,-14,12,-14]].forEach(p => {
+            ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.lineTo(p[2],p[3]); ctx.lineTo(p[4],p[5]);
+            ctx.closePath(); ctx.fill();
+        });
+ 
+        // Headband
+        ctx.fillStyle = '#ff0000'; ctx.fillRect(-14, -22, 28, 3);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(-14, -21, 28, 1);
+ 
+        // Eyes
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.ellipse(-5, -14, 3, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(5, -14, 3, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+        const pupilOff = Math.max(-1.5, Math.min(1.5, goku.vy * 0.2));
+        ctx.fillStyle = '#003388';
+        ctx.beginPath(); ctx.arc(-4, -13.5 + pupilOff, 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(6, -13.5 + pupilOff, 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(-3.5, -14.5, 0.8, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(6.5, -14.5, 0.8, 0, Math.PI * 2); ctx.fill();
+ 
+        // Eyebrows
+        ctx.strokeStyle = '#885522'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-8, -18); ctx.lineTo(-2, -17); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(8, -18); ctx.lineTo(2, -17); ctx.stroke();
+ 
+        // Mouth
+        if (goku.vy < -3) {
+            ctx.fillStyle = '#993333';
+            ctx.beginPath(); ctx.arc(0, -8, 3, 0, Math.PI); ctx.fill();
+        } else {
+            ctx.strokeStyle = '#883333'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(-3, -8); ctx.lineTo(3, -7); ctx.stroke();
+        }
+ 
+        // Legs & boots
+        ctx.fillStyle = '#0044cc';
+        ctx.save(); ctx.rotate(Math.sin(goku.wingFrame * 0.15) * 0.2);
+        ctx.fillRect(-8, 18, 6, 10); ctx.fillRect(2, 18, 6, 10);
+        ctx.restore();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.ellipse(-5, 30, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(5, 30, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+ 
+        // Monkey tail
+        ctx.strokeStyle = '#cc6600'; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(0, 16);
+        ctx.quadraticCurveTo(18, 20, 15 + Math.sin(frame * 0.08) * 5, 30 + Math.cos(frame * 0.08) * 3);
+        ctx.stroke();
+ 
+        ctx.restore();
+    }
+ 
+    function drawOrb(orb) {
+        ctx.save(); ctx.translate(orb.x, orb.y);
+        ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0, 180, 255, ${0.15 + Math.sin(frame * 0.1) * 0.1})`; ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2);
+        const orbGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, 10);
+        orbGrad.addColorStop(0, '#ffffff');
+        orbGrad.addColorStop(0.3, '#00ccff');
+        orbGrad.addColorStop(0.7, '#0066ff');
+        orbGrad.addColorStop(1, 'rgba(0, 60, 255, 0.3)');
+        ctx.fillStyle = orbGrad; ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('⚡', 0, 0);
+        for (let i = 0; i < 3; i++) {
+            const a = frame * 0.05 + (i * Math.PI * 2 / 3);
+            ctx.beginPath(); ctx.arc(Math.cos(a) * 14, Math.sin(a) * 14, 2, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(100, 200, 255, ${0.5 + Math.sin(frame * 0.1 + i) * 0.3})`; ctx.fill();
+        }
+        ctx.restore();
+    }
+ 
+    function drawParticles() {
+        particles.forEach(p => {
+            ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+            if (p.type === 'star') {
+                ctx.font = `${p.size * 3}px Arial`; ctx.textAlign = 'center';
+                ctx.fillText('✦', p.x, p.y);
+            } else {
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        });
+    }
+ 
+    function drawKiBlast(blast) {
+        ctx.save(); ctx.translate(blast.x, blast.y);
+        ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 200, 255, 0.3)'; ctx.fill();
+        const bg = ctx.createRadialGradient(0, 0, 2, 0, 0, 8);
+        bg.addColorStop(0, '#ffffff'); bg.addColorStop(0.4, '#00ccff'); bg.addColorStop(1, '#0044ff');
+        ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, 0, 12 + Math.sin(frame * 0.3) * 3, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+    }
+ 
+    // ============ GAME LOGIC ============
+    function spawnPipe() {
+        const gapY = 120 + Math.random() * (H - 240);
+        pipes.push({ x: W + 20, gapY, scored: false });
+        if (Math.random() < 0.4) {
+            orbs.push({ x: W + 20 + PIPE_WIDTH / 2, y: gapY + (Math.random() - 0.5) * (PIPE_GAP - 40), size: 10 });
+        }
+    }
+ 
+    function flap() {
+        if (gameState !== 'playing') return;
+        goku.vy = FLAP_FORCE;
+        goku.wingFrame++;
+        for (let i = 0; i < 5; i++) {
+            particles.push({
+                x: goku.x - 10, y: goku.y + 10,
+                vx: -2 - Math.random() * 3, vy: Math.random() * 2 - 1,
+                size: 2 + Math.random() * 3, life: 1,
+                decay: 0.03 + Math.random() * 0.02,
+                type: 'trail', color: goku.isPowered ? '#ffdd00' : '#ff8844'
+            });
+        }
+    }
+ 
+    function shootKiBlast() {
+        if (goku.kiPower < 20) return;
+        goku.kiPower -= 20;
+        blasts.push({ x: goku.x + 20, y: goku.y, vx: 8, size: 8 });
+        for (let i = 0; i < 8; i++) {
+            particles.push({
+                x: goku.x + 20, y: goku.y + (Math.random() - 0.5) * 20,
+                vx: 5 + Math.random() * 5, vy: (Math.random() - 0.5) * 4,
+                size: 2 + Math.random() * 3, life: 1, decay: 0.05,
+                type: 'ki', color: '#00ccff'
+            });
+        }
+        shakeAmount = 3;
+    }
+ 
+    function checkCollision() {
+        const gw = goku.width / 2, gh = goku.height / 2;
+        if (goku.y + gh > H - 20 || goku.y - gh < 0) return true;
+        for (const pipe of pipes) {
+            const topH = pipe.gapY - PIPE_GAP / 2;
+            const botY = pipe.gapY + PIPE_GAP / 2;
+            if (goku.x + gw > pipe.x && goku.x - gw < pipe.x + PIPE_WIDTH) {
+                if (goku.y - gh < topH || goku.y + gh > botY) return true;
+            }
+        }
+        return false;
+    }
+ 
+    function die() {
+        gameState = 'gameover';
+        shakeAmount = 15;
+        for (let i = 0; i < 30; i++) {
+            const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 6;
+            particles.push({
+                x: goku.x, y: goku.y,
+                vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+                size: 3 + Math.random() * 5, life: 1,
+                decay: 0.02 + Math.random() * 0.02,
+                type: 'explosion',
+                color: ['#ff4400','#ffaa00','#ffdd00','#ff6600'][Math.floor(Math.random()*4)]
+            });
+        }
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('flappyGokuHigh', highScore);
+        }
+        document.getElementById('final-score').textContent = `Score: ${score}`;
+        document.getElementById('high-score').textContent = `Best: ${highScore}`;
+        document.getElementById('game-over-screen').classList.add('visible');
+    }
+ 
+    function resetGame() {
+        goku.y = H / 2; goku.vy = 0; goku.rotation = 0;
+        goku.kiPower = 0; goku.isPowered = false; goku.trail = [];
+        pipes = []; orbs = []; particles = []; blasts = [];
+        score = 0; frame = 0;
+        document.getElementById('score-display').textContent = '0';
+        document.getElementById('power-fill').style.width = '0%';
+    }
+ 
+    // ============ UPDATE & RENDER ============
+    function update() {
+        frame++;
+        if (gameState === 'playing') {
+            goku.vy += GRAVITY;
+            goku.y += goku.vy;
+            goku.rotation = Math.max(-0.5, Math.min(0.5, goku.vy * 0.06));
+            goku.trail.push({ x: goku.x, y: goku.y, life: 1 });
+            if (goku.trail.length > 20) goku.trail.shift();
+ 
+            if (frame % 90 === 0) spawnPipe();
+ 
+            pipes.forEach(pipe => {
+                pipe.x -= PIPE_SPEED;
+                if (!pipe.scored && pipe.x + PIPE_WIDTH < goku.x) {
+                    pipe.scored = true; score++;
+                    document.getElementById('score-display').textContent = score;
+                    for (let i = 0; i < 5; i++) {
+                        particles.push({
+                            x: W/2, y: 30, vx: (Math.random()-0.5)*4, vy: Math.random()*3,
+                            size: 3+Math.random()*3, life: 1, decay: 0.03,
+                            type: 'star', color: '#ffdd00'
+                        });
+                    }
+                }
+            });
+            pipes = pipes.filter(p => p.x + PIPE_WIDTH > -20);
+ 
+            orbs.forEach(orb => {
+                orb.x -= PIPE_SPEED;
+                const dx = goku.x - orb.x, dy = goku.y - orb.y;
+                if (Math.sqrt(dx*dx + dy*dy) < 25) {
+                    orb.collected = true;
+                    goku.kiPower = Math.min(goku.maxKi, goku.kiPower + 25);
+                    goku.isPowered = goku.kiPower >= 20;
+                    document.getElementById('power-fill').style.width =
+                        (goku.kiPower / goku.maxKi * 100) + '%';
+                    for (let i = 0; i < 12; i++) {
+                        const a = Math.random() * Math.PI * 2;
+                        particles.push({
+                            x: orb.x, y: orb.y,
+                            vx: Math.cos(a)*3, vy: Math.sin(a)*3,
+                            size: 2+Math.random()*3, life: 1, decay: 0.04,
+                            type: 'ki', color: '#00ccff'
+                        });
+                    }
+                }
+            });
+            orbs = orbs.filter(o => !o.collected && o.x > -20);
+ 
+            blasts.forEach(blast => {
+                blast.x += blast.vx;
+                pipes.forEach(pipe => {
+                    const topH = pipe.gapY - PIPE_GAP / 2;
+                    const botY = pipe.gapY + PIPE_GAP / 2;
+                    if (blast.x > pipe.x && blast.x < pipe.x + PIPE_WIDTH) {
+                        if (blast.y < topH || blast.y > botY) {
+                            blast.hit = true;
+                            pipe.gapY += (Math.random() - 0.5) * 40;
+                            pipe.gapY = Math.max(120, Math.min(H - 120, pipe.gapY));
+                            for (let i = 0; i < 10; i++) {
+                                particles.push({
+                                    x: blast.x, y: blast.y,
+                                    vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6,
+                                    size: 2+Math.random()*4, life: 1, decay: 0.04,
+                                    type: 'ki', color: '#00ccff'
+                                });
+                            }
+                        }
+                    }
+                });
+            });
+            blasts = blasts.filter(b => !b.hit && b.x < W + 20);
+ 
+            if (checkCollision()) die();
+            bgScroll += PIPE_SPEED;
+        }
+ 
+        particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life -= p.decay; p.vx *= 0.98; p.vy *= 0.98; });
+        particles = particles.filter(p => p.life > 0);
+        goku.trail.forEach(t => t.life -= 0.05);
+        goku.trail = goku.trail.filter(t => t.life > 0);
+        if (shakeAmount > 0) shakeAmount *= 0.9;
+        if (shakeAmount < 0.1) shakeAmount = 0;
+    }
+ 
+    function draw() {
+        ctx.save();
+        if (shakeAmount > 0) {
+            ctx.translate((Math.random()-0.5)*shakeAmount, (Math.random()-0.5)*shakeAmount);
+        }
+        drawSky(); drawClouds(); drawMountains();
+        goku.trail.forEach(t => {
+            ctx.globalAlpha = t.life * 0.3;
+            ctx.beginPath(); ctx.arc(t.x, t.y, 5 * t.life, 0, Math.PI * 2);
+            ctx.fillStyle = goku.isPowered ? '#ffcc00' : '#ff8844';
+            ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+        pipes.forEach(drawPipe);
+        orbs.forEach(drawOrb);
+        blasts.forEach(drawKiBlast);
+        if (gameState === 'playing' || gameState === 'gameover') drawGoku();
+        drawParticles(); drawGround();
+        const vig = ctx.createRadialGradient(W/2, H/2, W*0.3, W/2, H/2, W*0.7);
+        vig.addColorStop(0, 'transparent');
+        vig.addColorStop(1, 'rgba(0,0,0,0.3)');
+        ctx.fillStyle = vig;
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+    }
+ 
+    function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+ 
+    // ============ INPUT ============
+    document.addEventListener('keydown', e => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+            e.preventDefault();
+            if (gameState === 'playing') { flap(); if (e.shiftKey) shootKiBlast(); }
+        }
+        if (e.code === 'KeyZ' && gameState === 'playing') shootKiBlast();
+    });
+ 
+    document.getElementById('game-container').addEventListener('mousedown', () => {
+        if (gameState === 'playing') flap();
+    });
+    document.getElementById('game-container').addEventListener('touchstart', e => {
+        if (gameState === 'playing') { e.preventDefault(); flap(); }
+    });
+ 
+    document.getElementById('start-btn').addEventListener('click', () => {
+        gameState = 'playing'; resetGame();
+        document.getElementById('landing-screen').classList.add('hidden');
+    });
+    document.getElementById('retry-btn').addEventListener('click', () => {
+        gameState = 'playing'; resetGame();
+        document.getElementById('game-over-screen').classList.remove('visible');
+    });
+ 
+    resetGame();
+    gameLoop();
+    // js
+// ===== WEB AUDIO API SOUND SYSTEM =====
+let audioCtx = null, sfxEnabled = true;
+function getAC() { if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function playFlap(){ if(!sfxEnabled)return; try{
+  const c=getAC(),o=c.createOscillator(),g=c.createGain(); o.connect(g); g.connect(c.destination);
+  o.type='sine'; o.frequency.setValueAtTime(600,c.currentTime);
+  o.frequency.exponentialRampToValueAtTime(300,c.currentTime+0.1);
+  g.gain.setValueAtTime(0.15,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.12);
+  o.start(c.currentTime); o.stop(c.currentTime+0.12);
+  const b=c.createBuffer(1,c.sampleRate*0.05,c.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+  const n=c.createBufferSource(); n.buffer=b; const ng=c.createGain();
+  ng.gain.setValueAtTime(0.06,c.currentTime); ng.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.05);
+  n.connect(ng); ng.connect(c.destination); n.start(c.currentTime);
+}catch(e){} }
+function playScore(){ if(!sfxEnabled)return; try{
+  const c=getAC();[523,659,784].forEach((f,i)=>{
+    const o=c.createOscillator(),g=c.createGain(); o.connect(g); g.connect(c.destination);
+    o.type='sine'; o.frequency.setValueAtTime(f,c.currentTime+i*0.07);
+    g.gain.setValueAtTime(0,c.currentTime+i*0.07); g.gain.linearRampToValueAtTime(0.12,c.currentTime+i*0.07+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+i*0.07+0.2);
+    o.start(c.currentTime+i*0.07); o.stop(c.currentTime+i*0.07+0.2);
+  });
+}catch(e){} }
+function playCollect(){ if(!sfxEnabled)return; try{
+  const c=getAC();
+  for(let i=0;i<3;i++){ const o=c.createOscillator(),g=c.createGain(); o.connect(g); g.connect(c.destination);
+    o.type='sine'; o.frequency.setValueAtTime(800+i*400+Math.random()*100,c.currentTime+i*0.05);
+    g.gain.setValueAtTime(0,c.currentTime+i*0.05); g.gain.linearRampToValueAtTime(0.1,c.currentTime+i*0.05+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+i*0.05+0.15);
+    o.start(c.currentTime+i*0.05); o.stop(c.currentTime+i*0.05+0.15); }
+}catch(e){} }
+function playBlast(){ if(!sfxEnabled)return; try{
+  const c=getAC(),o=c.createOscillator(),g=c.createGain(); o.connect(g); g.connect(c.destination);
+  o.type='sawtooth'; o.frequency.setValueAtTime(800,c.currentTime);
+  o.frequency.exponentialRampToValueAtTime(2000,c.currentTime+0.15);
+  g.gain.setValueAtTime(0.12,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.2);
+  o.start(c.currentTime); o.stop(c.currentTime+0.2);
+  const s=c.createOscillator(),sg=c.createGain(); s.connect(sg); sg.connect(c.destination);
+  s.type='sine'; s.frequency.setValueAtTime(100,c.currentTime);
+  s.frequency.exponentialRampToValueAtTime(50,c.currentTime+0.1);
+  sg.gain.setValueAtTime(0.15,c.currentTime); sg.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.15);
+  s.start(c.currentTime); s.stop(c.currentTime+0.15);
+}catch(e){} }
+function playDeath(){ if(!sfxEnabled)return; try{
+  const c=getAC(),b=c.createBuffer(1,c.sampleRate*0.5,c.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+  const n=c.createBufferSource(); n.buffer=b; const ng=c.createGain();
+  ng.gain.setValueAtTime(0.25,c.currentTime); ng.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.4);
+  n.connect(ng); ng.connect(c.destination); n.start(c.currentTime);
+  const o=c.createOscillator(),g=c.createGain(); o.connect(g); g.connect(c.destination);
+  o.type='sine'; o.frequency.setValueAtTime(80,c.currentTime);
+  o.frequency.exponentialRampToValueAtTime(30,c.currentTime+0.4);
+  g.gain.setValueAtTime(0.3,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.5);
+  o.start(c.currentTime); o.stop(c.currentTime+0.5);
+}catch(e){} }
+function playGameOver(){ if(!sfxEnabled)return; try{
+  const c=getAC();[400,350,300,200].forEach((f,i)=>{
+    const o=c.createOscillator(),g=c.createGain(); o.connect(g); g.connect(c.destination);
+    o.type='triangle'; o.frequency.setValueAtTime(f,c.currentTime+i*0.25);
+    g.gain.setValueAtTime(0,c.currentTime+i*0.25); g.gain.linearRampToValueAtTime(0.12,c.currentTime+i*0.25+0.05);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+i*0.25+0.3);
+    o.start(c.currentTime+i*0.25); o.stop(c.currentTime+i*0.25+0.3);
+  });
+}catch(e){} }
+function showPopup(x,y,t){ const p=document.createElement('div'); p.className='score-popup';
+  p.textContent=t; p.style.left=x+'px'; p.style.top=y+'px';
+  document.getElementById('game-container').appendChild(p); setTimeout(()=>p.remove(),1000); }
+ 
+// ===== MUSIC CONTROLS =====
+const musicToggle=document.getElementById('music-toggle'),bgMusic=document.getElementById('bgMusic'),
+  volSlider=document.getElementById('music-volume-slider'),volWrap=document.getElementById('music-volume-wrap');
+let isMusicPlaying=false;
+const MUSIC_URL='https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+bgMusic.src=MUSIC_URL; bgMusic.volume=parseFloat(localStorage.getItem('musicVolume')||volSlider.value);
+volSlider.value=bgMusic.volume;
+function toggleMusic(){ if(isMusicPlaying){ bgMusic.pause(); musicToggle.classList.remove('playing');
+  musicToggle.classList.add('muted'); } else { bgMusic.play().then(()=>{ musicToggle.classList.add('playing');
+  musicToggle.classList.remove('muted'); }).catch(()=>{}); } isMusicPlaying=!isMusicPlaying; }
+musicToggle.addEventListener('click',toggleMusic);
+musicToggle.addEventListener('mouseenter',()=>volWrap.classList.add('visible'));
+musicToggle.addEventListener('mouseleave',()=>{ setTimeout(()=>{
+  if(!volWrap.matches(':hover')&&!musicToggle.matches(':hover')) volWrap.classList.remove('visible'); },100); });
+volWrap.addEventListener('mouseleave',()=>volWrap.classList.remove('visible'));
+volSlider.addEventListener('input',()=>{ bgMusic.volume=parseFloat(volSlider.value); localStorage.setItem('musicVolume',volSlider.value); });
+bgMusic.addEventListener('ended',()=>{ if(isMusicPlaying){ bgMusic.currentTime=0; bgMusic.play().catch(()=>{}); } });
+let musicStarted=false;
+function tryAutoStartMusic(){ if(!musicStarted){ musicStarted=true; if(!isMusicPlaying) toggleMusic(); } }
+ 
+// SFX Toggle with persistence
+const sfxToggle=document.getElementById('sfx-toggle');
+sfxEnabled=localStorage.getItem('sfxEnabled')==='false'?false:true;
+if(!sfxEnabled) sfxToggle.classList.add('muted');
+sfxToggle.addEventListener('click',function(){
+  sfxEnabled=!sfxEnabled; this.classList.toggle('muted'); localStorage.setItem('sfxEnabled',sfxEnabled); });
+ 
+// ===== HOOK SOUND EFFECTS INTO GAME =====
+// Save original functions
+const origFlap=flap, origDie=die, origBlast=shootKiBlast;
+// Override flap with sound
+flap=function(){ if(gameState!=='playing') return; origFlap.call(this); playFlap(); };
+// Override shoot with sound
+shootKiBlast=function(){ if(goku.kiPower<20) return; origBlast.call(this); playBlast(); };
+// Override die with sound + combo tracking
+die=function(){ playDeath(); setTimeout(playGameOver,300);
+  origDie.call(this);
+  const fe=document.getElementById('final-combo');
+  if(fe) fe.textContent=comboCount>=3?`Best Combo: ${comboCount}x 🔥`:''; };
+// Add sound to scoring in pipe loop (find and modify the existing score increment)
+// We'll patch the pipe scoring in the update loop
+// Actually, let's modify the pipe scoring directly
+const origUpdate=update; let patched=false;
+ 
+// Add combo & difficulty tracking
+let comboCount=0, comboTimer=0, difficultyTimer=0, basePipeSpeed=PIPE_SPEED;
+ 
+// Patch the die function to include combo
+const origDie2=die; die=function(){ gameState='gameover';
+  shakeAmount=15; playDeath(); setTimeout(playGameOver,300);
+  for(let i=0;i<30;i++){ const a=Math.random()*Math.PI*2,s=2+Math.random()*6;
+    particles.push({x:goku.x,y:goku.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,
+    size:3+Math.random()*5,life:1,decay:0.02+Math.random()*0.02,type:'explosion',
+    color:['#ff4400','#ffaa00','#ffdd00','#ff6600'][Math.floor(Math.random()*4)]}); }
+  if(score>highScore){ highScore=score; localStorage.setItem('flappyGokuHigh',highScore); }
+  document.getElementById('final-score').textContent='Score: '+score;
+  document.getElementById('high-score').textContent='Best: '+highScore;
+  document.getElementById('game-over-screen').classList.add('visible');
+  const ce=document.getElementById('combo-display'); if(ce) ce.classList.remove('visible');
+  const fe=document.getElementById('final-combo');
+  if(fe) fe.textContent=comboCount>=3?'Best Combo: '+comboCount+'x 🔥':''; };
+ 
+// Patch pipe scoring in update to add combo + sounds
+const origUpdate2=update;
+update=function(){ frame++; if(gameState==='playing'){
+  difficultyTimer++;
+  const cs=basePipeSpeed+Math.min(3,difficultyTimer*0.0005);
+  goku.vy+=GRAVITY; goku.y+=goku.vy;
+  goku.rotation=Math.max(-0.5,Math.min(0.5,goku.vy*0.06));
+  goku.trail.push({x:goku.x,y:goku.y,life:1});
+  if(goku.trail.length>20) goku.trail.shift();
+  if(frame%Math.max(60,90-Math.floor(difficultyTimer*0.02))===0) spawnPipe();
+  for(let p of pipes){
+    p.x-=cs; if(!p.scored&&p.x+PIPE_WIDTH<goku.x){
+      p.scored=true; score++; comboCount++; comboTimer=60; playScore();
+      document.getElementById('score-display').textContent=score;
+      showPopup(200,80,'+'+score);
+      const ce=document.getElementById('combo-display');
+      if(ce){ ce.textContent=comboCount>=3?comboCount+'x COMBO! 🔥':''; ce.classList.toggle('visible',comboCount>=3); }
+      for(let i=0;i<5;i++) particles.push({x:W/2,y:30,vx:(Math.random()-0.5)*4,vy:Math.random()*3,
+        size:3+Math.random()*3,life:1,decay:0.03,type:'star',color:'#ffdd00'}); } }
+  if(comboTimer>0){ comboTimer--; if(comboTimer===0){ comboCount=0;
+    const ce=document.getElementById('combo-display'); if(ce) ce.classList.remove('visible'); } }
+  pipes=pipes.filter(p=>p.x+PIPE_WIDTH>-20);
+  for(let o of orbs){ o.x-=cs; const dx=goku.x-o.x,dy=goku.y-o.y;
+    if(Math.sqrt(dx*dx+dy*dy)<25){ o.collected=true; goku.kiPower=Math.min(goku.maxKi,goku.kiPower+25);
+      goku.isPowered=goku.kiPower>=20; playCollect();
+      document.getElementById('power-fill').style.width=(goku.kiPower/goku.maxKi*100)+'%';
+      for(let i=0;i<12;i++){ const a=Math.random()*Math.PI*2;
+        particles.push({x:o.x,y:o.y,vx:Math.cos(a)*3,vy:Math.sin(a)*3,
+          size:2+Math.random()*3,life:1,decay:0.04,type:'ki',color:'#00ccff'}); } } }
+  orbs=orbs.filter(o=>!o.collected&&o.x>-20);
+  for(let b of blasts){ b.x+=b.vx+cs*0.3; for(let p of pipes){
+    const th=p.gapY-basePipeGap/2,by=p.gapY+basePipeGap/2;
+    if(b.x>p.x&&b.x<p.x+PIPE_WIDTH&&(b.y<th||b.y>by)){ b.hit=true;
+      p.gapY+= (Math.random()-0.5)*40; p.gapY=Math.max(120,Math.min(H-120,p.gapY));
+      for(let i=0;i<10;i++) particles.push({x:b.x,y:b.y,vx:(Math.random()-0.5)*6,vy:(Math.random()-0.5)*6,
+        size:2+Math.random()*4,life:1,decay:0.04,type:'ki',color:'#00ccff'}); } } }
+  blasts=blasts.filter(b=>!b.hit&&b.x<W+20);
+  if(checkCollision()) die(); bgScroll+=cs; }
+  for(let p of particles){ p.x+=p.vx; p.y+=p.vy; p.life-=p.decay; p.vx*=0.98; p.vy*=0.98; }
+  particles=particles.filter(p=>p.life>0); goku.trail.forEach(t=>t.life-=0.05);
+  goku.trail=goku.trail.filter(t=>t.life>0);
+  if(shakeAmount>0) shakeAmount*=0.9; if(shakeAmount<0.1) shakeAmount=0; };
+ 
+// Hook auto-start music into start/retry buttons
+document.getElementById('start-btn').addEventListener('click',tryAutoStartMusic);
+document.getElementById('retry-btn').addEventListener('click',tryAutoStartMusic);
+document.addEventListener('keydown',function firstFlap(e){ if((e.code==='Space'||e.code==='ArrowUp')&&gameState==='playing')
+  { tryAutoStartMusic(); document.removeEventListener('keydown',firstFlap); } },{once:true});
+document.getElementById('game-container').addEventListener('mousedown',function firstClick(){
+  if(gameState==='playing'){ tryAutoStartMusic(); this.removeEventListener('mousedown',firstClick); } },{once:true});
+    </script>
+</body>
+</html> 

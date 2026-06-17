@@ -1,0 +1,19 @@
+{
+  "name": "flappy-goku",
+  "version": "1.0.0",
+  "description": "Flappy Bird-style game featuring Goku from Dragon Ball Z",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "game",
+    "flappy-bird",
+    "goku",
+    "dragon-ball-z",
+    "canvas"
+  ],
+  "author": "",
+  "license": "MIT"
+}
